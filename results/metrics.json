@@ -1,0 +1,30 @@
+{
+  "dataset": "UCI Parkinsons (Little et al., 2009)",
+  "n_samples": 195,
+  "n_features": 22,
+  "test_size": 0.3,
+  "seed": 0,
+  "class_balance_positive_frac": 0.7538461538461538,
+  "models": {
+    "logistic_regression": {
+      "accuracy": 0.8135593220338984,
+      "f1": 0.8674698795180723,
+      "roc_auc": 0.8818181818181818
+    },
+    "random_forest": {
+      "accuracy": 0.8305084745762712,
+      "f1": 0.8863636363636364,
+      "roc_auc": 0.8946969696969697
+    },
+    "svc_rbf": {
+      "accuracy": 0.8305084745762712,
+      "f1": 0.8837209302325582,
+      "roc_auc": 0.9075757575757575
+    },
+    "baseline_most_frequent": {
+      "accuracy": 0.7457627118644068,
+      "f1": 0.8543689320388349,
+      "roc_auc": 0.5
+    }
+  }
+}
