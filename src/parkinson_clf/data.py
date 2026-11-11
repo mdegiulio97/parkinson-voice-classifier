@@ -1,23 +1,27 @@
-"""Caricamento dati per il classificatore Parkinson.
+"""Data loading for the Parkinson classifier.
 
-Due sorgenti, stessa forma (colonne feature + `status`):
-- `load_parkinsons(data_dir)`  legge il CSV UCI scaricato in `data/`.
-- `make_synthetic(n, seed)`    genera un dataset sintetico separabile con la
-  stessa forma, usato dai test per girare OFFLINE (senza rete).
+Two sources with the same shape (feature columns + `status`):
+- `load_parkinsons(data_dir)`              reads the UCI CSV downloaded into `data/`.
+- `load_parkinsons_with_groups(data_dir)`  same, plus the subject ID of each row.
+- `make_synthetic(n, seed)`                separable synthetic data with the same
+  shape, used by the tests to run OFFLINE.
 
-Il dataset UCI Parkinsons ha 22 feature di misure vocali (dysphonia) piu' la
-colonna target `status` (1 = Parkinson, 0 = sano). La colonna `name` viene
-scartata perche' e' un identificativo, non una feature.
+UCI Parkinsons has 195 sustained-vowel recordings from 31 subjects (about six
+per subject), 22 voice features and the target `status` (1 = Parkinson's,
+0 = healthy). The `name` column (e.g. `phon_R01_S01_1`) identifies the subject:
+it is not a feature, but it is needed to keep each subject's recordings on the
+same side of every split.
 """
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-# Le 22 feature di misure vocali del dataset UCI Parkinsons (esclusi `name` e `status`).
+# The 22 voice features of UCI Parkinsons (excluding `name` and `status`).
 FEATURE_COLUMNS = [
     "MDVP:Fo(Hz)",
     "MDVP:Fhi(Hz)",
@@ -43,36 +47,57 @@ FEATURE_COLUMNS = [
     "PPE",
 ]
 TARGET_COLUMN = "status"
+_NAME_RE = re.compile(r"^phon_R01_(S\d+)_\d+$")
 
 
-def load_parkinsons(data_dir: str | Path) -> pd.DataFrame:
-    """Legge il CSV UCI (`parkinsons.data`) da `data_dir` e scarta `name`.
+def subject_ids(names: pd.Series) -> np.ndarray:
+    """Subject ID from each UCI recording name (`phon_R01_S01_1` -> `S01`).
 
-    Restituisce un DataFrame con le 22 feature + la colonna `status`.
+    Raises ValueError on any name that does not match, rather than inventing a
+    subject.
     """
+    out = []
+    for name in names:
+        m = _NAME_RE.match(str(name))
+        if m is None:
+            raise ValueError(f"Unexpected recording name: {name!r}")
+        out.append(m.group(1))
+    return np.array(out, dtype=object)
+
+
+def _read_csv(data_dir: str | Path) -> pd.DataFrame:
     csv_path = Path(data_dir) / "parkinsons.data"
     if not csv_path.exists():
         raise FileNotFoundError(
-            f"Dataset non trovato: {csv_path}. "
-            "Esegui prima 'uv run python scripts/download_data.py'."
+            f"Dataset not found: {csv_path}. "
+            "Run 'uv run python scripts/download_data.py' first."
         )
-    df = pd.read_csv(csv_path)
-    df = df.drop(columns=["name"])
-    return df[FEATURE_COLUMNS + [TARGET_COLUMN]]
+    return pd.read_csv(csv_path)
+
+
+def load_parkinsons(data_dir: str | Path) -> pd.DataFrame:
+    """Read the UCI CSV (`parkinsons.data`): the 22 features + `status`."""
+    return _read_csv(data_dir)[FEATURE_COLUMNS + [TARGET_COLUMN]]
+
+
+def load_parkinsons_with_groups(data_dir: str | Path) -> tuple[pd.DataFrame, np.ndarray]:
+    """Like `load_parkinsons`, plus the subject ID of each row (for grouped CV)."""
+    df = _read_csv(data_dir)
+    return df[FEATURE_COLUMNS + [TARGET_COLUMN]], subject_ids(df["name"])
 
 
 def make_synthetic(n: int = 195, seed: int = 0) -> pd.DataFrame:
-    """Genera un dataset sintetico con la stessa forma del reale.
+    """Synthetic dataset with the same shape as the real one.
 
-    Due cluster gaussiani separabili (classe 1 = Parkinson ~75%, come nel dataset
-    reale sbilanciato). Serve ai test per validare la pipeline SENZA rete.
+    Two separable Gaussian clusters (class 1 = Parkinson's, ~75%, as in the
+    imbalanced real data). Lets the tests validate the pipeline WITHOUT network.
     """
     rng = np.random.default_rng(seed)
     n_pos = int(round(0.75 * n))
     n_neg = n - n_pos
     n_features = len(FEATURE_COLUMNS)
 
-    # Centri distinti per le due classi -> problema linearmente separabile.
+    # Distinct centres for the two classes -> linearly separable problem.
     center_pos = rng.normal(0.0, 0.3, size=n_features) + 1.0
     center_neg = rng.normal(0.0, 0.3, size=n_features) - 1.0
 
