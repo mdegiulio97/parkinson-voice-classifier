@@ -1,8 +1,7 @@
-"""Smoke test OFFLINE: la pipeline gira su dati sintetici, senza rete.
+"""OFFLINE smoke tests: the pipeline runs on synthetic data, without network.
 
-La CI non ha accesso al dataset reale UCI, quindi tutti i test usano
-`make_synthetic`, che ha la stessa forma/colonne del reale ma con
-ground-truth separabile.
+CI has no access to the real UCI dataset, so every test uses `make_synthetic`,
+which has the same shape/columns as the real data with a separable ground truth.
 """
 
 import numpy as np
@@ -29,7 +28,7 @@ def test_split_is_stratified():
     df = make_synthetic(n=200, seed=1)
     x_train, x_test, y_train, y_test = split_data(df, test_size=0.3, seed=1)
     assert len(x_train) + len(x_test) == 200
-    # proporzione della classe positiva simile tra train e test (stratificato)
+    # similar positive-class fraction in train and test (stratified)
     assert abs(y_train.mean() - y_test.mean()) < 0.05
 
 
@@ -57,7 +56,7 @@ def test_models_beat_baseline_on_separable_data():
     base = evaluate_model(models["baseline_most_frequent"], x_train, y_train, x_test, y_test)
     for name in ("logistic_regression", "random_forest", "svc_rbf"):
         m = evaluate_model(models[name], x_train, y_train, x_test, y_test)
-        # su dati separabili ogni classificatore deve avere ROC-AUC alta e
-        # battere la baseline (che per costruzione ha roc_auc ~= 0.5)
+        # on separable data every classifier must have a high ROC-AUC and beat
+        # the baseline (which has roc_auc ~= 0.5 by construction)
         assert m["roc_auc"] > 0.9
         assert m["roc_auc"] > base["roc_auc"]

@@ -1,30 +1,98 @@
 {
   "dataset": "UCI Parkinsons (Little et al., 2009)",
   "n_samples": 195,
+  "n_subjects": 32,
   "n_features": 22,
-  "test_size": 0.3,
-  "seed": 0,
   "class_balance_positive_frac": 0.7538461538461538,
-  "models": {
-    "logistic_regression": {
-      "accuracy": 0.8135593220338984,
-      "f1": 0.8674698795180723,
-      "roc_auc": 0.8818181818181818
-    },
-    "random_forest": {
-      "accuracy": 0.8305084745762712,
-      "f1": 0.8863636363636364,
-      "roc_auc": 0.8946969696969697
-    },
-    "svc_rbf": {
-      "accuracy": 0.8305084745762712,
-      "f1": 0.8837209302325582,
-      "roc_auc": 0.9075757575757575
-    },
-    "baseline_most_frequent": {
-      "accuracy": 0.7457627118644068,
-      "f1": 0.8543689320388349,
-      "roc_auc": 0.5
+  "subject_level_cv": {
+    "method": "repeated StratifiedGroupKFold by subject, pooled out-of-fold predictions",
+    "n_splits": 5,
+    "n_repeats": 10,
+    "seed": 0,
+    "models": {
+      "logistic_regression": {
+        "accuracy": {
+          "mean": 0.782051282051282,
+          "std": 0.019222220322042356
+        },
+        "f1": {
+          "mean": 0.8588070225987241,
+          "std": 0.013901285321146229
+        },
+        "roc_auc": {
+          "mean": 0.727281746031746,
+          "std": 0.03116026085404951
+        }
+      },
+      "random_forest": {
+        "accuracy": {
+          "mean": 0.7743589743589744,
+          "std": 0.014322297480788667
+        },
+        "f1": {
+          "mean": 0.8589287913639506,
+          "std": 0.009558193882353985
+        },
+        "roc_auc": {
+          "mean": 0.7769203514739229,
+          "std": 0.024683400985186385
+        }
+      },
+      "svc_rbf": {
+        "accuracy": {
+          "mean": 0.7769230769230768,
+          "std": 0.023750843439814172
+        },
+        "f1": {
+          "mean": 0.8560717785469315,
+          "std": 0.018291416332617563
+        },
+        "roc_auc": {
+          "mean": 0.6427862811791383,
+          "std": 0.03280307930876965
+        }
+      },
+      "baseline_most_frequent": {
+        "accuracy": {
+          "mean": 0.7538461538461538,
+          "std": 0.0
+        },
+        "f1": {
+          "mean": 0.8596491228070174,
+          "std": 1.1102230246251565e-16
+        },
+        "roc_auc": {
+          "mean": 0.5,
+          "std": 0.0
+        }
+      }
+    }
+  },
+  "record_level_split_leaky": {
+    "method": "stratified 70/30 split by recording (same subject in train and test)",
+    "test_size": 0.3,
+    "seed": 0,
+    "models": {
+      "logistic_regression": {
+        "accuracy": 0.8135593220338984,
+        "f1": 0.8674698795180723,
+        "roc_auc": 0.8818181818181818
+      },
+      "random_forest": {
+        "accuracy": 0.8305084745762712,
+        "f1": 0.8863636363636364,
+        "roc_auc": 0.8946969696969697
+      },
+      "svc_rbf": {
+        "accuracy": 0.8305084745762712,
+        "f1": 0.8837209302325582,
+        "roc_auc": 0.9075757575757575
+      },
+      "baseline_most_frequent": {
+        "accuracy": 0.7457627118644068,
+        "f1": 0.8543689320388349,
+        "roc_auc": 0.5
+      }
     }
   }
 }
