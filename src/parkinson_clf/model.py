@@ -1,14 +1,14 @@
-"""Modelli di classificazione binaria + baseline.
+"""Binary classifiers + baseline.
 
-Tre classificatori scikit-learn (regressione logistica, random forest, SVC RBF)
-piu' una baseline `DummyClassifier(most_frequent)` che serve da riferimento
-onesto: qualunque modello utile deve batterla, specie con classi sbilanciate
-(~75% Parkinson) dove predire sempre la maggioranza da' comunque alta accuracy.
+Three scikit-learn classifiers (logistic regression, random forest, RBF SVC)
+plus a `DummyClassifier(most_frequent)` baseline: any useful model must beat it,
+especially with imbalanced classes (~75% Parkinson's), where always predicting
+the majority class already gives high accuracy.
 
-Ogni modello e' una `Pipeline` con `StandardScaler`, cosi' le feature vocali
-(scale molto diverse: Hz, jitter, shimmer, ...) sono standardizzate prima del
-fit. Per random forest lo scaling e' irrilevante ma innocuo, e mantiene
-l'interfaccia uniforme.
+Each model is a `Pipeline` with `StandardScaler`, so that voice features on very
+different scales (Hz, jitter, shimmer, ...) are standardised inside each fit.
+Scaling is irrelevant for the random forest but harmless, and keeps the
+interface uniform.
 """
 
 from __future__ import annotations
@@ -29,17 +29,17 @@ from parkinson_clf.data import FEATURE_COLUMNS, TARGET_COLUMN
 def split_data(
     df: pd.DataFrame, test_size: float = 0.3, seed: int = 0
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Split stratificato train/test (mantiene le proporzioni delle classi)."""
+    """Stratified train/test split BY RECORDING. Leaky: kept only for comparison."""
     x = df[FEATURE_COLUMNS].to_numpy(dtype=float)
     y = df[TARGET_COLUMN].to_numpy(dtype=int)
     return train_test_split(x, y, test_size=test_size, random_state=seed, stratify=y)
 
 
 def build_models(seed: int = 0) -> dict[str, Pipeline]:
-    """Costruisce i tre classificatori + la baseline, tutti con StandardScaler.
+    """Build the three classifiers + the baseline, all with StandardScaler.
 
-    Restituisce un dizionario nome -> Pipeline non ancora addestrata. Tutti i
-    modelli espongono `predict_proba` per calcolare la ROC-AUC.
+    Returns a dict name -> unfitted Pipeline. Every model exposes
+    `predict_proba`, needed for ROC-AUC.
     """
     return {
         "logistic_regression": Pipeline(
